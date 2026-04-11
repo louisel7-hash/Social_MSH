@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>סימולטור קרן MTF ממונפת Nasdaq 100 ×3 חודשי</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--mint:#00C9A7;--mint-dark:#009e84;--mint-glow:rgba(0,201,167,0.18);--bg:#0a0e14;--bg2:#111720;--bg3:#18212e;--bg4:#1f2d3d;--text:#e8f0f8;--text2:#9bb3cc;--text3:#5a7a99;--border:rgba(0,201,167,0.15);--blue:#4e9eff;--red:#ff5e7a;--yellow:#ffc452;--card-shadow:0 4px 32px rgba(0,0,0,0.4);--radius:16px;}
+[data-theme="light"]{--bg:#f0f6ff;--bg2:#fff;--bg3:#e8f0f8;--bg4:#dce8f5;--text:#0d1f35;--text2:#3a5a7a;--text3:#7a9ab8;--border:rgba(0,150,120,0.2);--card-shadow:0 4px 24px rgba(0,100,80,.12);}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;direction:rtl;}
+header{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);}
+.logo-area{display:flex;align-items:center;gap:14px;}
+.logo-badge{width:44px;height:44px;background:linear-gradient(135deg,var(--mint),var(--mint-dark));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 20px var(--mint-glow);}
+.logo-text h1{font-size:1.1rem;font-weight:800;color:var(--mint);}
+.logo-text p{font-size:.72rem;color:var(--text3);}
+.theme-btn{background:var(--bg4);border:1px solid var(--border);color:var(--text2);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:.85rem;transition:all .2s;font-family:'Heebo',sans-serif;}
+.theme-btn:hover{background:var(--mint);color:#000;}
+main{max-width:1280px;margin:0 auto;padding:28px 24px;}
+.section-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;color:var(--mint);text-transform:uppercase;margin-bottom:10px;opacity:.8;}
+/* Compare */
+.compare-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:28px;overflow-x:auto;}
+.compare-panel h3{font-size:.9rem;font-weight:700;margin-bottom:5px;}
+.panel-sub{font-size:.72rem;color:var(--text3);margin-bottom:18px;}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+th{background:var(--bg3);color:var(--text3);font-weight:700;padding:10px 14px;text-align:right;border-bottom:2px solid var(--border);font-size:.74rem;letter-spacing:.03em;}
+th.mint-col{color:var(--mint);}th.blue-col{color:var(--blue);}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);transition:background .15s;}
+tr:hover td{background:var(--mint-glow);}
+td.mint{color:var(--mint);font-weight:700;}td.blue{color:var(--blue);font-weight:700;}td.red{color:var(--red);font-weight:600;}td.gray{color:var(--text3);}td.lbl{font-weight:600;color:var(--text2);}
+.diff-pos{color:var(--mint);font-size:.75rem;font-weight:700;}
+.diff-neg{color:var(--red);font-size:.75rem;font-weight:700;}
+.diff-neu{color:var(--text3);font-size:.75rem;}
+.info-note{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.75rem;color:var(--text3);margin-top:14px;line-height:1.5;}
+.info-note strong{color:var(--text2);}
+/* Mode tabs */
+.mode-tabs{display:flex;gap:0;margin-bottom:22px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:5px;width:fit-content;}
+.mode-tab{padding:10px 24px;border-radius:10px;border:none;font-family:'Heebo',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;transition:all .2s;color:var(--text3);background:transparent;}
+.mode-tab.active{background:linear-gradient(135deg,var(--mint),var(--mint-dark));color:#000;box-shadow:0 2px 12px var(--mint-glow);}
+.mode-tab:not(.active):hover{color:var(--mint);}
+/* Invest row */
+.invest-row{display:flex;align-items:center;gap:14px;margin-bottom:22px;flex-wrap:wrap;}
+.invest-row label{font-size:.88rem;font-weight:700;color:var(--text2);}
+.input-group{display:flex;align-items:center;gap:8px;}
+.input-group input[type="number"]{background:var(--bg3);border:1.5px solid var(--border);color:var(--text);border-radius:10px;padding:9px 14px;font-size:.95rem;font-weight:600;font-family:'Heebo',sans-serif;direction:ltr;text-align:right;transition:border-color .2s;width:160px;}
+.input-group input[type="number"]:focus{outline:none;border-color:var(--mint);}
+.input-label{font-size:.85rem;color:var(--text3);}
+/* Hist mode */
+.mode-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:22px;}
+.explain-box{border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:.8rem;color:var(--text2);line-height:1.6;}
+.explain-box.green{background:rgba(0,201,167,.07);border-right:3px solid var(--mint);}
+.explain-box.blue{background:rgba(78,158,255,.07);border-right:3px solid var(--blue);}
+.period-picker{display:flex;gap:8px;flex-wrap:wrap;}
+.period-btn{padding:9px 16px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg4);color:var(--text2);font-family:'Heebo',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;transition:all .18s;}
+.period-btn.active,.period-btn:hover{background:var(--mint);color:#000;border-color:var(--mint);box-shadow:0 0 12px var(--mint-glow);}
+/* Result cards */
+.result-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px;}
+.result-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:transform .2s;}
+.result-card:hover{transform:translateY(-2px);}
+.result-card .rc-lbl{font-size:.7rem;color:var(--text3);margin-bottom:6px;font-weight:600;}
+.result-card .rc-main{font-size:1.4rem;font-weight:900;}
+.result-card .rc-sub{font-size:.72rem;color:var(--text3);margin-top:3px;}
+.result-card.hl{border-color:rgba(0,201,167,.4);background:linear-gradient(135deg,var(--bg2),rgba(0,201,167,.05));}
+/* Charts */
+.charts-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;margin-bottom:26px;}
+@media(max-width:900px){.charts-grid{grid-template-columns:1fr;}}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--card-shadow);}
+.chart-card h3{font-size:.85rem;font-weight:700;color:var(--text2);margin-bottom:4px;}
+.chart-card .chart-sub{font-size:.72rem;color:var(--text3);margin-bottom:16px;}
+.chart-wrap{position:relative;height:260px;}
+/* Controls */
+.controls-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+@media(max-width:700px){.controls-grid{grid-template-columns:1fr;}}
+.ctrl-panel{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.ctrl-panel h3{font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.slider-row{margin-bottom:16px;}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.slider-name{font-size:.78rem;color:var(--text2);font-weight:500;}
+.slider-val{font-size:.88rem;font-weight:800;color:var(--mint);background:var(--mint-glow);padding:2px 10px;border-radius:6px;min-width:56px;text-align:center;}
+input[type="range"]{width:100%;height:6px;border-radius:3px;-webkit-appearance:none;appearance:none;background:var(--bg4);cursor:pointer;outline:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--mint);border-radius:50%;box-shadow:0 0 8px var(--mint-glow);transition:transform .1s;}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+.months-row{display:flex;gap:8px;flex-wrap:wrap;}
+.month-btn{flex:1;min-width:46px;background:var(--bg4);border:1.5px solid var(--border);color:var(--text2);border-radius:10px;padding:9px 0;cursor:pointer;font-size:.82rem;font-weight:600;transition:all .18s;font-family:'Heebo',sans-serif;text-align:center;}
+.month-btn.active,.month-btn:hover{background:var(--mint);color:#000;border-color:var(--mint);box-shadow:0 0 12px var(--mint-glow);}
+/* Actions */
+.actions-row{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
+.btn{padding:11px 20px;border-radius:12px;border:none;font-family:'Heebo',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px;}
+.btn-primary{background:linear-gradient(135deg,var(--mint),var(--mint-dark));color:#000;box-shadow:0 4px 16px var(--mint-glow);}
+.btn-primary:hover{transform:translateY(-2px);}
+.btn-secondary{background:var(--bg2);border:1.5px solid var(--mint);color:var(--mint);}
+.btn-secondary:hover{background:var(--mint-glow);}
+.btn-outline{background:var(--bg2);border:1.5px solid var(--border);color:var(--text2);}
+.btn-outline:hover{border-color:var(--mint);color:var(--mint);}
+.btn:active{transform:scale(.97);}
+/* Percentile */
+.percentile-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.perc-badge{padding:6px 12px;border-radius:8px;font-size:.76rem;font-weight:700;}
+.perc-10{background:rgba(255,94,122,.15);color:var(--red);border:1px solid rgba(255,94,122,.3);}
+.perc-50{background:var(--mint-glow);color:var(--mint);border:1px solid rgba(0,201,167,.3);}
+.perc-90{background:rgba(78,158,255,.15);color:var(--blue);border:1px solid rgba(78,158,255,.3);}
+/* Accordion */
+.accordion{margin-bottom:28px;}
+.acc-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+.acc-header{padding:15px 20px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;transition:background .2s;}
+.acc-header:hover{background:var(--mint-glow);}
+.acc-title{font-size:.88rem;font-weight:700;}
+.acc-arrow{color:var(--mint);transition:transform .3s;font-weight:900;}
+.acc-item.open .acc-arrow{transform:rotate(180deg);}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 20px;}
+.acc-item.open .acc-body{max-height:280px;padding:0 20px 16px;}
+.acc-body p{font-size:.82rem;line-height:1.7;color:var(--text2);}
+/* Spinner */
+.spinner-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);}
+.spinner-overlay.show{display:flex;}
+.spinner-box{background:var(--bg2);border-radius:20px;padding:36px 48px;text-align:center;border:1px solid var(--border);}
+.spinner{width:48px;height:48px;border:4px solid var(--bg4);border-top-color:var(--mint);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner-box p{color:var(--mint);font-weight:700;font-size:.9rem;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.animate{animation:fadeSlide .4s ease forwards;}
+footer{text-align:center;padding:26px;border-top:1px solid var(--border);color:var(--text3);font-size:.74rem;line-height:1.6;}
+footer strong{color:var(--mint);}
+.hidden{display:none!important;}
+@media(max-width:600px){main{padding:14px 12px;}header{padding:12px 14px;}.logo-text h1{font-size:.9rem;}}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="spinner-overlay" id="spinner">
+  <div class="spinner-box"><div class="spinner"></div><p>מריץ 500 סימולציות...</p></div>
+</div>
+
+<header>
+  <div class="logo-area">
+    <div class="logo-badge">🌿</div>
+    <div class="logo-text">
+      <h1>MTF ×3 חודשי — Nasdaq 100</h1>
+      <p>סימולטור אינטראקטיבי מתקדם</p>
+    </div>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()">☀️ / 🌙</button>
+</header>
+
+<main>
+
+<!-- ══ SECTION 1: REAL DATA COMPARISON ══ -->
+<div class="section-label">נתוני קרן אמיתיים — השוואה מול מדד</div>
+<div class="compare-panel">
+  <h3>ביצועי הקרן מול Nasdaq‑100 לאורך תקופות</h3>
+  <div class="panel-sub" id="compareSubtitle"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>תקופה</th>
+        <th>תאריכים</th>
+        <th class="mint-col">🌿 קרן MTF ×3</th>
+        <th class="blue-col">📊 Nasdaq‑100</th>
+        <th>יתרון הקרן</th>
+      </tr>
+    </thead>
+    <tbody id="compareBody"></tbody>
+  </table>
+  <div class="info-note"><strong>הערה:</strong> תשואות הקרן הן נתוני MTF. נתוני Nasdaq‑100 הם קירוב על בסיס ביצועי המדד הידועים לתקופות אלו.</div>
+</div>
+
+<!-- ══ SECTION 2: SIMULATOR ══ -->
+<div class="section-label">סימולטור — מה היה קורה עם הכסף שלך?</div>
+
+<!-- Shared invest input -->
+<div class="invest-row">
+  <label>סכום השקעה:</label>
+  <div class="input-group">
+    <input type="number" id="investInput" value="10000" min="100" step="500" oninput="onInvestChange()">
+    <span class="input-label">₪</span>
+  </div>
+  <span style="font-size:.78rem;color:var(--text3)">שני הסימולטורים ישתמשו בסכום זה</span>
+</div>
+
+<!-- Mode tabs -->
+<div class="mode-tabs">
+  <button class="mode-tab active" id="tabHist" onclick="setMode('hist')">🕐 היסטורי — מה היה קורה?</button>
+  <button class="mode-tab" id="tabFuture" onclick="setMode('future')">🎲 עתידי — מה עשוי לקרות?</button>
+</div>
+
+<!-- ── HISTORICAL MODE ── -->
+<div id="histMode">
+  <div class="mode-panel">
+    <div class="explain-box green">
+      <strong>מצב היסטורי:</strong> בחרי תקופה — תראי בדיוק מה היה קורה לסכום שלך לו השקעת בתחילת אותה תקופה, על בסיס הביצועים <em>האמיתיים</em> של הקרן והמדד.
+    </div>
+    <div style="font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:10px;">בחרי תקופה:</div>
+    <div class="period-picker" id="periodPicker">
+      <button class="period-btn active" data-period="3m" onclick="setHistPeriod('3m')">3 חודשים אחרונים</button>
+      <button class="period-btn" data-period="12m" onclick="setHistPeriod('12m')">12 חודשים אחרונים</button>
+      <button class="period-btn" data-period="2025ytd" onclick="setHistPeriod('2025ytd')">2026 עד כה</button>
+      <button class="period-btn" data-period="2023" onclick="setHistPeriod('2023')">2023 🚀</button>
+      <button class="period-btn" data-period="2024" onclick="setHistPeriod('2024')">2024 📈</button>
+      <button class="period-btn" data-period="3y" onclick="setHistPeriod('3y')">3 שנים 2022–2024</button>
+    </div>
+  </div>
+
+  <div class="result-cards" id="histResultCards">
+    <div class="result-card" style="grid-column:1/-1;text-align:center;color:var(--text3);padding:24px">בחרי תקופה לצפייה בתוצאות</div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3 id="histChartTitle">ביצועי ההשקעה לאורך התקופה</h3>
+      <div class="chart-sub" id="histChartSub">בחרי תקופה</div>
+      <div class="chart-wrap"><canvas id="histLineChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>השוואה סופית</h3>
+      <div class="chart-sub">ערך ₪ בסוף התקופה</div>
+      <div class="chart-wrap"><canvas id="histBarChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FUTURE MODE ── -->
+<div id="futureMode" class="hidden">
+  <div class="mode-panel">
+    <div class="explain-box blue">
+      <strong>מצב עתידי:</strong> אין ביכולת איש לדעת מה יקרה — אבל ניתן לראות טווח אפשרויות על בסיס סטטיסטיקה. הסימולטור מריץ 500 תרחישים אקראיים לפי הפרמטרים שתבחרי.
+    </div>
+    <div class="controls-grid">
+      <div class="ctrl-panel">
+        <h3>⚙️ פרמטרי שוק</h3>
+        <div class="slider-row">
+          <div class="slider-header"><span class="slider-name">תנודתיות חודשית</span><span class="slider-val" id="volVal">5.75%</span></div>
+          <input type="range" id="volSlider" min="1" max="15" step=".25" value="5.75" oninput="updateSlider('vol')">
+        </div>
+        <div class="slider-row">
+          <div class="slider-header"><span class="slider-name">תשואה חודשית ממוצעת</span><span class="slider-val" id="retVal">+2.00%</span></div>
+          <input type="range" id="retSlider" min="-5" max="5" step=".25" value="2" oninput="updateSlider('ret')">
+        </div>
+      </div>
+      <div class="ctrl-panel">
+        <h3>📅 טווח זמן</h3>
+        <div class="slider-name" style="margin-bottom:10px">מספר חודשים</div>
+        <div class="months-row">
+          <button class="month-btn" onclick="setMonths(3)">3</button>
+          <button class="month-btn" onclick="setMonths(6)">6</button>
+          <button class="month-btn active" onclick="setMonths(12)">12</button>
+          <button class="month-btn" onclick="setMonths(24)">24</button>
+          <button class="month-btn" onclick="setMonths(36)">36</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions-row">
+    <button class="btn btn-primary" onclick="runSingle()">▶ הרץ סימולציה אחת</button>
+    <button class="btn btn-secondary" onclick="runMonteCarlo()">🎲 500 סימולציות Monte Carlo</button>
+    <button class="btn btn-outline" onclick="exportCSV()">⬇ ייצא CSV</button>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>מסלולי ביצוע — השוואה</h3>
+      <div class="chart-sub">נאסד"ק 100 · קרן ×3 בפועל · ×3 תיאורטי</div>
+      <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>פיזור Monte Carlo — 500 תוצאות</h3>
+      <div class="chart-sub">התפלגות שווי סופי לאחר <span id="mcMonthsLabel">12</span> חודשים</div>
+      <div class="chart-wrap"><canvas id="mcHistChart"></canvas></div>
+      <div class="percentile-row" id="percRow"></div>
+    </div>
+  </div>
+
+  <div class="compare-panel" style="margin-bottom:28px">
+    <h3>📊 טבלת סיכום הסימולציה</h3>
+    <table>
+      <thead><tr><th>מדד</th><th class="blue-col">נאסד"ק 100</th><th class="mint-col">קרן ×3 בפועל</th><th>×3 תיאורטי</th></tr></thead>
+      <tbody id="summaryBody"><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">הרץ סימולציה לצפייה בתוצאות</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ SECTION 3: ACCORDION ══ -->
+<div class="section-label">הסברים</div>
+<div class="accordion">
+  <div class="acc-item" id="acc1">
+    <div class="acc-header" onclick="toggleAcc('acc1')"><span class="acc-title">🔁 ההבדל בין מינוף חודשי למינוף יומי</span><span class="acc-arrow">▼</span></div>
+    <div class="acc-body"><p>קרן ממונפת <strong>יומית</strong> מיישמת מינוף על כל יום מסחר בנפרד, מה שיוצר "Volatility Decay" חמור לאורך זמן. קרן ×3 <strong>חודשית</strong> כמו MTF מיישמת המינוף פעם אחת בחודש בלבד — תנודות יום-יומיות אינן שוחקות את המינוף, והקרן שומרת על חשיפה יציבה יותר לאורך זמן.</p></div>
+  </div>
+  <div class="acc-item" id="acc2">
+    <div class="acc-header" onclick="toggleAcc('acc2')"><span class="acc-title">📉 למה קרן ×3 חודשי שוחקת פחות מ-×3 יומי</span><span class="acc-arrow">▼</span></div>
+    <div class="acc-body"><p>דוגמה: נאסד"ק יורד 5% ועולה 5% = סה"כ −0.25%; קרן ×3 יומית יורדת 15% ועולה 15% = סה"כ −2.25%. בחודשי, החישוב מתבצע פעם בחודש בלבד — תנודות פנים-חודשיות אינן מצטברות שלילית. זו הסיבה לתשואות יוצאות דופן ב-2023 ו-2024.</p></div>
+  </div>
+  <div class="acc-item" id="acc3">
+    <div class="acc-header" onclick="toggleAcc('acc3')"><span class="acc-title">📊 מה סטיית תקן 69% אומרת בפועל</span><span class="acc-arrow">▼</span></div>
+    <div class="acc-body"><p>סטיית תקן שנתית של 69% היא <strong>גבוהה מאוד</strong>. כ-68% מהשנים יסתיימו בתשואה בין −69% ל-+69% מהממוצע. שארפ 0.5 = חצי יחידת תשואה עודפת לכל יחידת סיכון. <strong>מסקנה מעשית:</strong> לא מתאים לכסף שצריך בטווח קצר. אופק מינימלי מומלץ: 3+ שנים.</p></div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <strong>⚠ הסימולטור מיועד להמחשה בלבד ואינו ייעוץ פיננסי.</strong><br>
+  נתוני Nasdaq‑100 הם קירוב על בסיס נתונים ציבוריים. נתוני הקרן מבוססים על פרסומי MTF.<br>
+  Monte Carlo: התפלגות נורמלית | Chart.js 4.4
+</footer>
+
+<script>
+// ─── DATE HELPERS ───
+function getAsOf(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),0);}
+function fmtD(d){return d.getDate().toString().padStart(2,'0')+'.'+(d.getMonth()+1).toString().padStart(2,'0')+'.'+d.getFullYear();}
+function rollingRange(asOf,n){const s=new Date(asOf.getFullYear(),asOf.getMonth()-n+1,1);return fmtD(s)+'–'+fmtD(asOf);}
+function calYear(y){return '01.01.'+y+'–31.12.'+y;}
+function ytdRange(asOf){return '01.01.'+asOf.getFullYear()+'–'+fmtD(asOf);}
+function threeYrRange(asOf){const s=new Date(asOf.getFullYear()-3,asOf.getMonth(),1);return fmtD(s)+'–'+fmtD(asOf);}
+const asOf=getAsOf();
+
+// ─── REAL DATA ───
+// Nasdaq-100 actuals: 2023 ~+54%, 2024 ~+26%, 2025 YTD Q1 ~-8%
+// 12m Apr24-Mar25 ~+14.5%, 3m Jan-Mar25 ~-8.2%, 3y Apr22-Mar25 ~+60%
+const REAL_DATA=[
+  {key:'3m',      label:'3 חודשים',     fund:-12.75, ndq:-8.2},
+  {key:'12m',     label:'12 חודשים',    fund:38.8,   ndq:14.5},
+  {key:'2025ytd', label:'2025',           fund:30.54,  ndq:-8.1},
+  {key:'2023',    label:'2023',         fund:211.45, ndq:53.8},
+  {key:'2024',    label:'2024',         fund:66.36,  ndq:25.6},
+  {key:'3y',      label:'3 שנים',       fund:282.3,  ndq:60.2},
+];
+function dateForKey(k){
+  const m={
+    '2023':calYear(2023),'2024':calYear(2024),
+    '2025ytd':'01.01.2026–'+fmtD(asOf),'12m':rollingRange(asOf,12),
+    '3m':rollingRange(asOf,3),'3y':threeYrRange(asOf),
+  };return m[k]||'';
+}
+
+// ─── APPROXIMATE MONTHLY DATA ───
+// Each array = monthly % return for fund & ndq
+const HIST_MONTHLY={
+  '2023':{months:12,fund:[11,5,9,2,9,7,4,0,-5,-2,12,18],ndq:[4,0,4,1,4,3,2,0,-2,-1,5,7],note:'2023 — שנת השיקום: קרן ×3 עלתה +211% לעומת נאסד"ק +54%'},
+  '2024':{months:12,fund:[4,-2,4,3,8,-2,5,2,-5,3,9,8], ndq:[2,-1,2,1,3,-1,2,1,-2,1,4,4], note:'2024 — שנה חזקה: קרן ×3 עלתה +66% לעומת נאסד"ק +26%'},
+  '2025ytd':{months:3,fund:[7,3,-12],ndq:[2,1,-8],note:'2026 (ינואר–מרץ): עלייה ואז ירידה חדה עם הטלות המכס'},
+  '3y':{months:36,
+    fund:[-7,-9,-13,-4,-12,-7,6,4,-11,5,3,2,11,5,9,2,9,7,4,0,-5,-2,12,18,4,-2,4,3,8,-2,5,2,-5,3,9,-8],
+    ndq: [-4,-4,-7,-2,-9,-2,3,1,-9,5,-2,1, 4,0,4,1,4,3,2,0,-2,-1,5,7, 2,-1,2,1,3,-1,2,1,-2,1,4,-8],
+    note:'3 שנים (2022–2024): למרות קריסת 2022, הקרן הכפילה פי ~3.8 לעומת +60% למדד'},
+  '12m':{months:12,fund:[3,5,2,-5,3,9,8,7,3,-5,-4,-8],ndq:[1,2,1,-2,1,4,4,2,1,-2,-2,-8],note:'12 חודשים אחרונים: קרן ×3 +38.8% לעומת נאסד"ק +14.5%'},
+  '3m':{months:3,fund:[7,3,-12],ndq:[2,1,-8],note:'3 חודשים אחרונים: שני הנכסים ירדו — המינוף הכביד'},
+};
+function labelForKey(k){return REAL_DATA.find(r=>r.key===k)?.label||k;}
+
+// ─── STATE ───
+let currentMode='hist';
+let currentHistPeriod='3m';
+let simMonths=12;
+let lineObj=null,mcObj=null,histLineObj=null,histBarObj=null;
+let lastSingleData=null;
+
+// ─── BUILD COMPARE TABLE ───
+function buildCompareTable(){
+  document.getElementById('compareSubtitle').textContent='נכון ל־'+fmtD(asOf);
+  const tbody=document.getElementById('compareBody');
+  tbody.innerHTML=REAL_DATA.map(r=>{
+    const diff=(r.fund-r.ndq).toFixed(1);
+    const dCls=diff>0?'diff-pos':diff<0?'diff-neg':'diff-neu';
+    const dSign=diff>0?'+':'';
+    const fR=(v,cls)=>`<td class="${cls}"><bdi dir="ltr">${v>=0?'+':''}${v}%</bdi></td>`;
+    return `<tr>
+      <td class="lbl">${r.label}</td>
+      <td style="font-size:.72rem;color:var(--text3)">${dateForKey(r.key)}</td>
+      ${fR(r.fund,'mint')}
+      ${fR(r.ndq,'blue')}
+      <td><span class="${dCls}"><bdi dir="ltr">${dSign}${diff}%</bdi></span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── MODE SWITCH ───
+function setMode(m){
+  currentMode=m;
+  document.getElementById('tabHist').classList.toggle('active',m==='hist');
+  document.getElementById('tabFuture').classList.toggle('active',m==='future');
+  document.getElementById('histMode').classList.toggle('hidden',m!=='hist');
+  document.getElementById('futureMode').classList.toggle('hidden',m!=='future');
+  if(m==='hist') renderHistorical();
+}
+
+// ─── HISTORICAL RENDER ───
+function setHistPeriod(p){
+  currentHistPeriod=p;
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.toggle('active',b.dataset.period===p));
+  renderHistorical();
+}
+
+function renderHistorical(){
+  const invest=getInvest();
+  const pd=HIST_MONTHLY[currentHistPeriod];
+  if(!pd) return;
+  // Build cumulative paths
+  const fPath=[invest],nPath=[invest];
+  for(let i=0;i<pd.fund.length;i++){
+    fPath.push(Math.max(fPath[fPath.length-1]*(1+pd.fund[i]/100),0));
+    nPath.push(Math.max(nPath[nPath.length-1]*(1+pd.ndq[i]/100),0));
+  }
+  const fFin=fPath[fPath.length-1],nFin=nPath[nPath.length-1];
+  const fRet=((fFin-invest)/invest*100).toFixed(1);
+  const nRet=((nFin-invest)/invest*100).toFixed(1);
+  const diff=fFin-nFin;
+
+  document.getElementById('histChartTitle').textContent='מסלול ההשקעה — '+labelForKey(currentHistPeriod);
+  document.getElementById('histChartSub').textContent=pd.note;
+
+  // Result cards
+  const ltr=s=>`<bdi dir="ltr">${s}</bdi>`;
+  const fI=v=>ltr('₪'+Math.round(v).toLocaleString('he-IL'));
+  const fP=v=>ltr((v>=0?'+':'')+v+'%');
+  const cards=document.getElementById('histResultCards');
+  cards.classList.add('animate');
+  cards.innerHTML=`
+    <div class="result-card hl">
+      <div class="rc-lbl">🌿 קרן MTF ×3 — שווי סופי</div>
+      <div class="rc-main" style="color:var(--mint)">${fI(fFin)}</div>
+      <div class="rc-sub">תשואה: ${fP(fRet)} | השקעה: ${fI(invest)}</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-lbl">📊 Nasdaq‑100 — שווי סופי</div>
+      <div class="rc-main" style="color:var(--blue)">${fI(nFin)}</div>
+      <div class="rc-sub">תשואה: ${fP(nRet)}</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-lbl">⚡ הפרש — קרן מול מדד</div>
+      <div class="rc-main" style="color:${diff>=0?'var(--mint)':'var(--red)'}">${ltr((diff>=0?'+':'−')+'₪'+Math.abs(Math.round(diff)).toLocaleString('he-IL'))}</div>
+      <div class="rc-sub">${diff>=0?'הקרן הרוויחה יותר מהמדד':'הקרן הפסידה יותר מהמדד'}</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-lbl">📅 תקופה</div>
+      <div class="rc-main" style="font-size:.88rem;color:var(--text2)">${dateForKey(currentHistPeriod)}</div>
+      <div class="rc-sub">${pd.months} חודשים</div>
+    </div>`;
+  setTimeout(()=>cards.classList.remove('animate'),500);
+
+  // Line chart
+  const labels=['התחלה',...pd.fund.map((_,i)=>`ח׳ ${i+1}`)];
+  const ctx1=document.getElementById('histLineChart').getContext('2d');
+  if(histLineObj)histLineObj.destroy();
+  histLineObj=new Chart(ctx1,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'קרן MTF ×3',data:fPath,borderColor:'#00C9A7',backgroundColor:'rgba(0,201,167,.09)',borderWidth:3,pointRadius:0,tension:.35,fill:true},
+      {label:'נאסד"ק 100', data:nPath,borderColor:'#4e9eff',backgroundColor:'rgba(78,158,255,.05)',borderWidth:2.5,pointRadius:0,tension:.35,fill:false},
+    ]},options:sharedChartOpts()
+  });
+
+  // Bar chart
+  const ctx2=document.getElementById('histBarChart').getContext('2d');
+  if(histBarObj)histBarObj.destroy();
+  histBarObj=new Chart(ctx2,{
+    type:'bar',
+    data:{
+      labels:['קרן MTF ×3','נאסד"ק 100','השקעה מקורית'],
+      datasets:[{data:[fFin,nFin,invest],backgroundColor:['rgba(0,201,167,.8)','rgba(78,158,255,.8)','rgba(90,122,153,.45)'],borderRadius:8,borderSkipped:false}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ₪${Math.round(c.parsed.y).toLocaleString('he-IL')}`}}},
+      scales:{
+        x:{ticks:{color:'#5a7a99',font:{family:'Heebo',size:11}},grid:{display:false}},
+        y:{ticks:{color:'#5a7a99',font:{family:'Heebo',size:10},callback:v=>'₪'+v.toLocaleString('he-IL',{maximumFractionDigits:0})},grid:{color:'rgba(90,122,153,.12)'}}
+      }
+    }
+  });
+}
+
+// ─── CHART OPTIONS ───
+function sharedChartOpts(){
+  return{responsive:true,maintainAspectRatio:false,animation:{duration:400},
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{labels:{color:'#9bb3cc',font:{family:'Heebo',size:11},padding:14,usePointStyle:true}},
+      tooltip:{rtl:true,callbacks:{label:c=>` ${c.dataset.label}: ₪${c.parsed.y.toLocaleString('he-IL',{maximumFractionDigits:0})}`}}
+    },
+    scales:{
+      x:{ticks:{color:'#5a7a99',font:{family:'Heebo',size:10},maxTicksLimit:8},grid:{color:'rgba(90,122,153,.12)'}},
+      y:{ticks:{color:'#5a7a99',font:{family:'Heebo',size:10},callback:v=>'₪'+v.toLocaleString('he-IL',{maximumFractionDigits:0})},grid:{color:'rgba(90,122,153,.12)'}}
+    }
+  };
+}
+
+// ─── FUTURE / MONTE CARLO ───
+function getInvest(){return parseFloat(document.getElementById('investInput').value)||10000;}
+function getVol(){return parseFloat(document.getElementById('volSlider').value)/100;}
+function getRet(){return parseFloat(document.getElementById('retSlider').value)/100;}
+function updateSlider(t){
+  if(t==='vol'){const v=parseFloat(document.getElementById('volSlider').value);document.getElementById('volVal').textContent=v.toFixed(2)+'%';}
+  else{const v=parseFloat(document.getElementById('retSlider').value);document.getElementById('retVal').textContent=(v>=0?'+':'')+v.toFixed(2)+'%';}
+}
+function setMonths(m){
+  simMonths=m;
+  document.querySelectorAll('.month-btn').forEach(b=>b.classList.toggle('active',parseInt(b.textContent)===m));
+  document.getElementById('mcMonthsLabel').textContent=m;
+}
+function onInvestChange(){if(currentMode==='hist')renderHistorical();}
+
+function randNormal(mu,sigma){const u1=Math.random(),u2=Math.random();return mu+sigma*Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);}
+function simulatePath(mu,sigma,n,invest){
+  const ndq=[invest],f3x=[invest],theo=[invest];
+  for(let i=0;i<n;i++){
+    const r=randNormal(mu,sigma);
+    ndq.push(Math.max(ndq[ndq.length-1]*(1+r),0));
+    f3x.push(Math.max(f3x[f3x.length-1]*(1+r*3),0));
+    theo.push(Math.max(theo[theo.length-1]*Math.pow(1+mu*3,1),0));
+  }
+  return{nasdaq:ndq,fund3x:f3x,fund3x_theoretical:theo};
+}
+function calcMDD(arr){let peak=arr[0],mx=0;for(const v of arr){if(v>peak)peak=v;const d=(peak-v)/peak;if(d>mx)mx=d;}return mx;}
+
+function runSingle(){
+  const d=simulatePath(getRet(),getVol(),simMonths,getInvest());
+  lastSingleData=d;
+  // Draw line chart
+  const n=d.nasdaq.length-1;
+  const labels=Array.from({length:n+1},(_,i)=>i===0?'התחלה':`ח׳ ${i}`);
+  const ctx=document.getElementById('lineChart').getContext('2d');
+  if(lineObj)lineObj.destroy();
+  lineObj=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'נאסד"ק 100',data:d.nasdaq,borderColor:'#4e9eff',backgroundColor:'rgba(78,158,255,.06)',borderWidth:2.5,pointRadius:0,tension:.35,fill:false},
+    {label:'קרן ×3 בפועל',data:d.fund3x,borderColor:'#00C9A7',backgroundColor:'rgba(0,201,167,.08)',borderWidth:3,pointRadius:0,tension:.35,fill:true},
+    {label:'×3 תיאורטי',data:d.fund3x_theoretical,borderColor:'#6b8aaa',borderDash:[6,4],backgroundColor:'transparent',borderWidth:1.8,pointRadius:0,tension:.35,fill:false}
+  ]},options:sharedChartOpts()});
+  // Summary
+  const invest=getInvest();
+  const nF=d.nasdaq[n],fF=d.fund3x[n],tF=d.fund3x_theoretical[n];
+  const ltr=s=>`<bdi dir="ltr">${s}</bdi>`;
+  const fI=v=>ltr('₪'+Math.round(v).toLocaleString('he-IL'));
+  const fP=v=>ltr((v>=0?'+':'−')+Math.abs(v)+'%');
+  const fD=v=>{const x=parseInt(v);return ltr((x>=0?'+':'−')+'₪'+Math.abs(x).toLocaleString('he-IL'));};
+  const nR=((nF-invest)/invest*100).toFixed(2);
+  const fR=((fF-invest)/invest*100).toFixed(2);
+  const tR=((tF-invest)/invest*100).toFixed(2);
+  const decay=(fF-tF).toFixed(0);
+  document.getElementById('summaryBody').innerHTML=`
+    <tr><td>תשואה כוללת</td><td class="${nR>=0?'blue':'red'}">${fP(nR)}</td><td class="${fR>=0?'mint':'red'}">${fP(fR)}</td><td class="gray">${fP(tR)}</td></tr>
+    <tr><td>שווי סופי</td><td class="blue">${fI(nF)}</td><td class="mint">${fI(fF)}</td><td class="gray">${fI(tF)}</td></tr>
+    <tr><td>Volatility Decay</td><td class="gray">—</td><td class="${decay>=0?'mint':'red'}">${fD(decay)}</td><td class="gray">—</td></tr>
+    <tr><td>Max Drawdown</td><td class="red">${ltr('−'+(calcMDD(d.nasdaq)*100).toFixed(1)+'%')}</td><td class="red">${ltr('−'+(calcMDD(d.fund3x)*100).toFixed(1)+'%')}</td><td class="red">${ltr('−'+(calcMDD(d.fund3x_theoretical)*100).toFixed(1)+'%')}</td></tr>`;
+}
+
+function runMonteCarlo(){
+  document.getElementById('spinner').classList.add('show');
+  setTimeout(()=>{
+    const res=[];
+    for(let i=0;i<500;i++){const{fund3x}=simulatePath(getRet(),getVol(),simMonths,getInvest());res.push(fund3x[fund3x.length-1]);}
+    res.sort((a,b)=>a-b);
+    // Histogram
+    const invest=getInvest();
+    const min=res[0],max=res[res.length-1],bins=30,bs=(max-min)/bins;
+    const cnts=new Array(bins).fill(0);
+    const lbls=[];
+    for(let i=0;i<bins;i++)lbls.push('₪'+Math.round(min+i*bs).toLocaleString('he-IL'));
+    for(const v of res){const idx=Math.min(bins-1,Math.floor((v-min)/bs));cnts[idx]++;}
+    const p10=res[Math.floor(.1*res.length)],p50=res[Math.floor(.5*res.length)],p90=res[Math.floor(.9*res.length)];
+    const cols=cnts.map((_,i)=>{const v=min+i*bs;return v<p10?'rgba(255,94,122,.65)':v<p90?'rgba(0,201,167,.65)':'rgba(78,158,255,.65)';});
+    const ctx=document.getElementById('mcHistChart').getContext('2d');
+    if(mcObj)mcObj.destroy();
+    mcObj=new Chart(ctx,{type:'bar',data:{labels:lbls,datasets:[{data:cnts,backgroundColor:cols,borderRadius:4,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y} סימולציות`,title:c=>`~${c[0].label}`}}},
+        scales:{x:{ticks:{color:'#5a7a99',font:{family:'Heebo',size:9},maxTicksLimit:6},grid:{display:false}},y:{ticks:{color:'#5a7a99',font:{family:'Heebo',size:10}},grid:{color:'rgba(90,122,153,.12)'}}}}});
+    const pct=v=>((v-invest)/invest*100).toFixed(1);
+    const fl=v=>`<bdi dir="ltr">₪${Math.round(v).toLocaleString('he-IL')}</bdi>`;
+    const fp=v=>{const p=pct(v);return `<bdi dir="ltr">(${p>=0?'+':''}${p}%)</bdi>`;};
+    document.getElementById('percRow').innerHTML=`
+      <div class="perc-badge perc-10">א10: ${fl(p10)} ${fp(p10)}</div>
+      <div class="perc-badge perc-50">חציון: ${fl(p50)} ${fp(p50)}</div>
+      <div class="perc-badge perc-90">א90: ${fl(p90)} ${fp(p90)}</div>`;
+    runSingle();
+    document.getElementById('spinner').classList.remove('show');
+  },50);
+}
+
+function exportCSV(){
+  if(!lastSingleData){alert('הרץ סימולציה תחילה');return;}
+  const{nasdaq,fund3x,fund3x_theoretical}=lastSingleData;
+  const rows=[['חודש','נאסד"ק 100 (₪)','קרן ×3 בפועל (₪)','×3 תיאורטי (₪)']];
+  for(let i=0;i<nasdaq.length;i++)rows.push([i,nasdaq[i].toFixed(2),fund3x[i].toFixed(2),fund3x_theoretical[i].toFixed(2)]);
+  const blob=new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`MTF_simulation_${simMonths}m.csv`;a.click();
+}
+
+function toggleAcc(id){document.getElementById(id).classList.toggle('open');}
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='dark'?'light':'dark';}
+
+// ─── INIT ───
+buildCompareTable();
+setHistPeriod('3m');
+</script>
+</body>
+</html>
