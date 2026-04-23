@@ -303,7 +303,7 @@ function buildCats(cid,pfx){
     c.appendChild(d);
   });
 }
-['kn','al','nt'].forEach(p=>buildCats(p+'-cats',p));
+buildCats('kn-cats','kn');buildCats('al-cats','al');buildCats('nt-cats','nt');
 function addTopic(){
   const c=document.getElementById('nt-topics-list');
   const n=++tc;const tid='nt-t'+n;
